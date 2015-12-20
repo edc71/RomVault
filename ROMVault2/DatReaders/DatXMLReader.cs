@@ -40,7 +40,7 @@ namespace ROMVault2.DatReaders
                     LoadGameFromDat(ref tDat, gameNode, thisFileType);
             }
 
-            XmlNodeList gameNodeList = doc.DocumentElement.SelectNodes("machine");
+            gameNodeList = doc.DocumentElement.SelectNodes("machine");
 
             if (gameNodeList != null)
             {
