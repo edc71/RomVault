@@ -7,12 +7,14 @@
 using System.IO;
 using System.Security.Cryptography;
 using ROMVault2.SupportedFiles.Zip.ZLib;
+using System.Threading;
+using System.Windows.Forms;
 
 namespace ROMVault2.SupportedFiles.Files
 {
     public static class UnCompFiles
     {
-        private const int Buffersize = 4096;
+        private const int Buffersize = 4096*256*6;
         private static readonly byte[] Buffer;
 
         static UnCompFiles()
@@ -47,9 +49,18 @@ namespace ROMVault2.SupportedFiles.Files
                     int sizenow = sizetogo > Buffersize ? Buffersize : (int)sizetogo;
 
                     ds.Read(Buffer, 0, sizenow);
-                    crc32.TransformBlock(Buffer, 0, sizenow, null, 0);
-                    if (testDeep) md5.TransformBlock(Buffer, 0, sizenow, null, 0);
-                    if (testDeep) sha1.TransformBlock(Buffer, 0, sizenow, null, 0);
+                    Thread t1 = new Thread(() => { crc32.TransformBlock(Buffer, 0, sizenow, null, 0); });
+                    t1.Start();
+                    if (testDeep)
+                    {
+                        Thread t2 = new Thread(() => { md5.TransformBlock(Buffer, 0, sizenow, null, 0); });
+                        Thread t3 = new Thread(() => { sha1.TransformBlock(Buffer, 0, sizenow, null, 0); });
+                        t2.Start();
+                        t3.Start();
+                        t2.Join();
+                        t3.Join();
+                    }
+                    t1.Join();
                     sizetogo -= sizenow;
                 }
 
@@ -63,7 +74,7 @@ namespace ROMVault2.SupportedFiles.Files
             {
                 if (ds != null)
                     ds.Close();
-
+                
                 return 0x17;
             }
 

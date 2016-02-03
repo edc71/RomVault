@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using ROMVault2.SupportedFiles.Zip.ZLib;
 
 // UInt16 = ushort
@@ -20,7 +21,7 @@ namespace ROMVault2.SupportedFiles.Zip
   
     public class ZipFile
     {
-        const int Buffersize = 4096 * 128;
+        const int Buffersize = 1024*1024*2;
         private static byte[] _buffer;
 
         private const uint LocalFileHeaderSignature = 0x04034b50;
@@ -726,16 +727,27 @@ namespace ROMVault2.SupportedFiles.Zip
                         int sizenow = sizetogo > Buffersize ? Buffersize : (int)sizetogo;
                         sInput.Read(_buffer, 0, sizenow);
 
-                        crc32.TransformBlock(_buffer, 0, sizenow, null, 0);
-                        lmd5.TransformBlock(_buffer, 0, sizenow, null, 0);
-                        lsha1.TransformBlock(_buffer, 0, sizenow, null, 0);
-
+                        Thread t1 = new Thread(() => { crc32.TransformBlock(_buffer, 0, sizenow, null, 0); });
+                        Thread t2 = new Thread(() => { lmd5.TransformBlock(_buffer, 0, sizenow, null, 0); });
+                        Thread t3 = new Thread(() => { lsha1.TransformBlock(_buffer, 0, sizenow, null, 0); });
+                        t1.Start();
+                        t2.Start();
+                        t3.Start();
+                        t1.Join();
+                        t2.Join();
+                        t3.Join();
                         sizetogo = sizetogo - (ulong)sizenow;
                     }
 
-                    crc32.TransformFinalBlock(_buffer, 0, 0);
-                    lmd5.TransformFinalBlock(_buffer, 0, 0);
-                    lsha1.TransformFinalBlock(_buffer, 0, 0);
+                    Thread ut1 = new Thread(() => { crc32.TransformFinalBlock(_buffer, 0, 0); });
+                    Thread ut2 = new Thread(() => { lmd5.TransformFinalBlock(_buffer, 0, 0); });
+                    Thread ut3 = new Thread(() => { lsha1.TransformFinalBlock(_buffer, 0, 0); });
+                    ut1.Start();
+                    ut2.Start();
+                    ut3.Start();
+                    ut1.Join();
+                    ut2.Join();
+                    ut3.Join();
 
                     byte[] testcrc = crc32.Hash;
                     md5 = lmd5.Hash;
