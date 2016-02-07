@@ -80,8 +80,11 @@ namespace ROMVault2.SupportedFiles.Files
                         t2.Join();
                         t3.Join();
                     }
+
                     t4.Join();
                     t1.Join();
+                    
+                    //swap buffers
                     byte[] tmpbuffer = Buffer2;
                     Buffer2 = Buffer;
                     Buffer = tmpbuffer;
