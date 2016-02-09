@@ -15,14 +15,11 @@ namespace ROMVault2.SupportedFiles.Files
     public static class UnCompFiles
     {
         private const int Buffersize = 4096*256*6;
-        static byte[] Buffer;
-        static byte[] Buffer2;
+        private static readonly byte[] Buffer;
 
         static UnCompFiles()
         {
             Buffer = new byte[Buffersize];
-            Buffer2 = new byte[Buffersize];
-
         }
 
         public static int CheckSumRead(string filename, bool testDeep, out byte[] crc, out byte[] bMD5, out byte[] bSHA1)
@@ -47,47 +44,24 @@ namespace ROMVault2.SupportedFiles.Files
 
                 long sizetogo = ds.Length;
 
-                int sizenow = sizetogo > Buffersize ? Buffersize : (int)sizetogo;
-                
-                ds.Read(Buffer, 0, sizenow);
-
-                Thread t2= null, t3 = null;
-                
                 while (sizetogo > 0)
                 {
+                    int sizenow = sizetogo > Buffersize ? Buffersize : (int)sizetogo;
 
+                    ds.Read(Buffer, 0, sizenow);
                     Thread t1 = new Thread(() => { crc32.TransformBlock(Buffer, 0, sizenow, null, 0); });
                     t1.Start();
                     if (testDeep)
                     {
-                        t2 = new Thread(() => { md5.TransformBlock(Buffer, 0, sizenow, null, 0); });
-                        t3 = new Thread(() => { sha1.TransformBlock(Buffer, 0, sizenow, null, 0); });
+                        Thread t2 = new Thread(() => { md5.TransformBlock(Buffer, 0, sizenow, null, 0); });
+                        Thread t3 = new Thread(() => { sha1.TransformBlock(Buffer, 0, sizenow, null, 0); });
                         t2.Start();
                         t3.Start();
-                    }
-
-                    Thread t4 = new Thread(() =>
-                    {
-                        sizetogo -= sizenow;
-                        sizenow = sizetogo > Buffersize ? Buffersize : (int)sizetogo;
-                        ds.Read(Buffer2, 0, sizenow);
-                    });
-
-                    t4.Start();
-
-                    if (testDeep)
-                    {
                         t2.Join();
                         t3.Join();
                     }
-
-                    t4.Join();
                     t1.Join();
-                    
-                    //swap buffers
-                    byte[] tmpbuffer = Buffer2;
-                    Buffer2 = Buffer;
-                    Buffer = tmpbuffer;
+                    sizetogo -= sizenow;
                 }
 
                 crc32.TransformFinalBlock(Buffer, 0, 0);
