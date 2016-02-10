@@ -13,6 +13,7 @@ using ROMVault2.SupportedFiles;
 using ROMVault2.SupportedFiles.Zip;
 using ROMVault2.SupportedFiles.Zip.ZLib;
 using ROMVault2.Utils;
+using System.Threading;
 
 namespace ROMVault2
 {
@@ -22,7 +23,7 @@ namespace ROMVault2
 
     public static class FixFileCopy
     {
-        private const int BufferSize = 4096 * 128;
+        private const int BufferSize = 1024*1024*6;
         private static byte[] _buffer;
 
         // This Function returns:
@@ -326,9 +327,15 @@ namespace ROMVault2
 
                     if (!rawCopy)
                     {
-                        crc32.TransformBlock(_buffer, 0, sizenow, null, 0);
-                        md5.TransformBlock(_buffer, 0, sizenow, null, 0);
-                        sha1.TransformBlock(_buffer, 0, sizenow, null, 0);
+                        Thread t1 = new Thread(() => { crc32.TransformBlock(_buffer, 0, sizenow, null, 0); });
+                        Thread t2 = new Thread(() => { md5.TransformBlock(_buffer, 0, sizenow, null, 0); });
+                        Thread t3 = new Thread(() => { sha1.TransformBlock(_buffer, 0, sizenow, null, 0); });
+                        t1.Start();
+                        t2.Start();
+                        t3.Start();
+                        t1.Join();
+                        t2.Join();
+                        t3.Join();
                     }
                     try
                     {
