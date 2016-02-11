@@ -518,9 +518,6 @@ namespace ROMVault2
                         fileIn.FileStatusSet(FileStatus.SHA1Verified);
                     }
 
-
-
-
                     if (sourceFailed)
                     {
                         if (fileIn.FileType == FileType.ZipFile)
