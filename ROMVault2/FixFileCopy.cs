@@ -23,7 +23,7 @@ namespace ROMVault2
 
     public static class FixFileCopy
     {
-        private const int BufferSize = 1024*1024*6;
+        private const int BufferSize = 4096 * 128;
         private static byte[] _buffer;
 
         // This Function returns:
@@ -517,6 +517,9 @@ namespace ROMVault2
                         fileIn.SHA1 = bSHA1;
                         fileIn.FileStatusSet(FileStatus.SHA1Verified);
                     }
+
+
+
 
                     if (sourceFailed)
                     {

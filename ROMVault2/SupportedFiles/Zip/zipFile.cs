@@ -21,7 +21,7 @@ namespace ROMVault2.SupportedFiles.Zip
   
     public class ZipFile
     {
-        private const int Buffersize = 1024*1024*2;
+        const int Buffersize = 1024*1024*2;
         private static byte[] _buffer;
 
         private const uint LocalFileHeaderSignature = 0x04034b50;
