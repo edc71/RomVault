@@ -12,16 +12,12 @@ namespace ROMVault2
 {
     static class Program
     {
-        //public static UsernamePassword Up;
         public static readonly Encoding Enc = Encoding.GetEncoding(28591);
         public const string Version = "2.2";
         public const string SubVersion = "4b";
         
         public static SynchronizationContext SyncCont;
 
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
         [STAThread]
         static void Main()
         {
