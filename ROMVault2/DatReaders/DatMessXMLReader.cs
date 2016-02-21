@@ -16,7 +16,9 @@ namespace ROMVault2.DatReaders
 
         public static bool ReadDat(ref RvDir tDat, XmlDocument doc)
         {
-            if (!LoadHeaderFromDat(ref tDat, ref doc))
+            FileType thisFileType = FileType.Unknown;
+
+            if (!LoadHeaderFromDat(ref tDat, ref doc, ref thisFileType))
                 return false;
 
             if (doc.DocumentElement == null)
@@ -27,13 +29,13 @@ namespace ROMVault2.DatReaders
                 return false;
             for (int i = 0; i < gameNodeList.Count; i++)
             {
-                LoadGameFromDat(ref tDat, gameNodeList[i]);
+                LoadGameFromDat(ref tDat, gameNodeList[i], thisFileType);
             }
 
             return true;
         }
 
-        private static bool LoadHeaderFromDat(ref RvDir tDir, ref XmlDocument doc)
+        private static bool LoadHeaderFromDat(ref RvDir tDir, ref XmlDocument doc, ref FileType thisFileType)
         {
             XmlNodeList head = doc.SelectNodes("softwarelist");
             if (head == null)
@@ -62,21 +64,36 @@ namespace ROMVault2.DatReaders
                     tDat.AddData(RvDat.DatData.MergeType, "split");
                     break;
             }
-
-
+            
+            val = VarFix.String(head[0].Attributes.GetNamedItem("forcepacking")).ToLower();
+            switch (val.ToLower())
+            {
+                case "zip":
+                    tDat.AddData(RvDat.DatData.FileType, "zip");
+                    thisFileType = FileType.ZipFile;
+                    break;
+                case "unzip":
+                case "file":
+                    tDat.AddData(RvDat.DatData.FileType, "file");
+                    thisFileType = FileType.File;
+                    break;
+                default:
+                    thisFileType = FileType.ZipFile;
+                    break;
+            }
 
             tDir.Dat = tDat;
             return true;
         }
 
-        private static void LoadGameFromDat(ref RvDir tDat, XmlNode gameNode)
+        private static void LoadGameFromDat(ref RvDir tDat, XmlNode gameNode, FileType thisFileType)
         {
             if (gameNode.Attributes == null)
                 return;
 
             RvDir parent = tDat;
 
-            RvDir tDir = new RvDir(FileType.Zip)
+            RvDir tDir = new RvDir(DBTypeGet.DirFromFile(thisFileType))
                         {
                             Name = VarFix.CleanFileName(gameNode.Attributes.GetNamedItem("name")),
                             Game = new RvGame(),
@@ -137,7 +154,7 @@ namespace ROMVault2.DatReaders
                         if (romNodeList != null)
                             for (int iR = 0; iR < romNodeList.Count; iR++)
                             {
-                                LoadRomFromDat(ref tDir, romNodeList[iR]);
+                                LoadRomFromDat(ref tDir, romNodeList[iR], thisFileType);
                             }
                     }
             }
@@ -164,7 +181,7 @@ namespace ROMVault2.DatReaders
 
         }
 
-        private static void LoadRomFromDat(ref RvDir tGame, XmlNode romNode)
+        private static void LoadRomFromDat(ref RvDir tGame, XmlNode romNode, FileType thisFileType)
         {
             if (romNode.Attributes == null)
                 return;
@@ -173,7 +190,7 @@ namespace ROMVault2.DatReaders
             string loadflag = VarFix.String(romNode.Attributes.GetNamedItem("loadflag"));
             if (name != null)
             {
-                RvFile tRom = new RvFile(FileType.ZipFile)
+                RvFile tRom = new RvFile(thisFileType) // changed
                                      {
                                          Name = VarFix.CleanFullFileName(name),
                                          Size = VarFix.ULong(romNode.Attributes.GetNamedItem("size")),

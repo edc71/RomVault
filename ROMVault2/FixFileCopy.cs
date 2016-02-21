@@ -23,7 +23,7 @@ namespace ROMVault2
 
     public static class FixFileCopy
     {
-        private const int BufferSize = 4096 * 128;
+        private const int BufferSize = 1024*1024*6;
         private static byte[] _buffer;
 
         // This Function returns:
